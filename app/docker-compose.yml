@@ -1,0 +1,16 @@
+version: "3.9"
+
+services:
+  community-forum:
+    build: .
+    container_name: community-forum
+    env_file: .env
+    ports:
+      - "8002:8002"
+    networks:
+      - minif_default
+   
+
+networks:
+  minif_default:
+    external: true
