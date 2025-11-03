@@ -35,7 +35,10 @@ class TopicUpdate(BaseModel):
     title: Optional[str] = Field(None, min_length=1, max_length=255)
     text: Optional[str] = Field(None, min_length=1)
 
-
+class TagResponse(BaseModel):
+    id: int
+    name: str
+    
 class TopicResponse(TopicBase):
     """
     Schema for topic responses.
@@ -45,12 +48,9 @@ class TopicResponse(TopicBase):
     author_id: int
     created_at: datetime
     updated_at: datetime
-    view_count: int
+    category_id: Optional[int] = None
+    tags: list[TagResponse] = []
     
-    class Config:
-        ''' ORM mode to work with SQLAlchemy models'''
-        from_attributes = True
-
 
 class TopicListResponse(BaseModel):
     """Schema for paginated topic list."""
@@ -58,3 +58,13 @@ class TopicListResponse(BaseModel):
     total: int
     page: int
     page_size: int
+    
+
+    class Config:
+        ''' ORM mode to work with SQLAlchemy models'''
+        from_attributes = True
+
+
+
+
+   

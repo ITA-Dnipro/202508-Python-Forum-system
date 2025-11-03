@@ -2,13 +2,9 @@ from datetime import datetime
 from sqlalchemy import Column, Integer, String, Text, DateTime
 from db.session import Base
 from sqlalchemy.orm import relationship 
+from sqlalchemy import Table, ForeignKey
 
-topic_tags = Table(
-    "topic_tags",
-    Base.metadata,
-    Column("topic_id", Integer, ForeignKey("topics.id", ondelete="CASCADE")),
-    Column("tag_id", Integer, ForeignKey("tags.id", ondelete="CASCADE"))
-)
+
 
 class Topic(Base):
     """
@@ -30,7 +26,7 @@ class Topic(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(255), nullable=False, index=True)
     text = Column(Text, nullable=False)
-    author_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    author_id = Column(Integer, nullable=False, index=True)
     category_id = Column(Integer, ForeignKey("categories.id", ondelete="SET NULL"), nullable=True)
     category = relationship("Category", back_populates="topics")
     tags = relationship("Tag", secondary="topic_tags", back_populates="topics")
@@ -57,6 +53,14 @@ class Tag(Base):
     def __repr__(self):
         return f"<Tag(id={self.id}, name='{self.name}')>"
     
+    
+
+topic_tags = Table(
+    "topic_tags",
+    Base.metadata,
+    Column("topic_id", Integer, ForeignKey("topics.id", ondelete="CASCADE")),
+    Column("tag_id", Integer, ForeignKey("tags.id", ondelete="CASCADE"))
+)
 class Category(Base):
     """
     Category model for topic categorization.
