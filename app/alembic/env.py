@@ -5,39 +5,33 @@ import os
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
-
 from alembic import context
-# 1. Додаємо корінь проекту до шляхів Python
-# Це дозволить нам імпортувати файли з 'db' та 'models'
 project_root = os.path.realpath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, project_root)
 
-# 2. Імпортуємо нашу Base та всі моделі
-# Alembic повинен "бачити" їх усі.
-from db.session import Base  # Або звідки ви її імпортуєте
-from models.topic import Topic, topic_tags,Tag,Category
+
+from db.session import Base  
+from models.topic import Topic, topic_tags, Tag, Category
 
 MY_TABLES = {
     "topics",
     "tags",
     "categories",
     "topic_tags",
-    "alembic_version",  # <-- Обов'язково!
+    "alembic_version",  
 }
 
-# 2. Наша функція-фільтр
+
 def include_object(object, name, type_, reflected, compare_to):
     """
-    Вирішує, чи має Alembic "бачити" цей об'єкт.
+    Determines if a database object should be included
+    in the Alembic migration context.
     """
     if type_ == "table":
-        # Якщо це таблиця, пропускаємо ТІЛЬКИ ті,
-        # що є у нашому списку MY_TABLES
+       
         return name in MY_TABLES
     else:
-        # Для всього іншого (колонок, індексів)
-        # повертаємо True. Alembic сам їх відфільтрує,
-        # якщо їхня таблиця-батько ігнорується.
+        
         return True
 
 # this is the Alembic Config object, which provides

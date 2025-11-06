@@ -5,22 +5,15 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Community Forum API"
     DEBUG: bool = True
 
-   
-    
+
     POSTGRESQL_USER: str
     POSTGRESQL_PASSWORD: str
     POSTGRESQL_DB: str
     POSTGRESQL_PORT: str = "5432"
     POSTGRESQL_SERVER: str
     
-
-   
     REDIS_HOST: str = "redis"
     REDIS_PORT: int = 6379
-
-    # JWT (mock)
-    # JWT_SECRET_KEY: str = "dev-secret-key"
-    # JWT_ALGORITHM: str = "HS256"
 
     @property
     def DATABASE_URL(self) -> str:

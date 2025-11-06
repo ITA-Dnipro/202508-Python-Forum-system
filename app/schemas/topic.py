@@ -1,12 +1,14 @@
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 
 class TopicBase(BaseModel):
     """Base schema with shared fields."""
     title: str = Field(..., min_length=1, max_length=255, description="Topic title")
     text: str = Field(..., min_length=1, description="Topic body text")
+    class Config:
+        from_attributes = True
 
 
 class TopicCreate(TopicBase):
@@ -15,14 +17,14 @@ class TopicCreate(TopicBase):
     Includes validation for required fields.
     """
     
-    @validator("title")
+    @field_validator("title")
     def validate_title(cls, v):
         """Ensure title is not empty or only whitespace."""
         if not v or not v.strip():
             raise ValueError("Title cannot be empty or whitespace only")
         return v.strip()
-    
-    @validator("text")
+
+    @field_validator("text")
     def validate_text(cls, v):
         """Ensure text is not empty or only whitespace."""
         if not v or not v.strip():
@@ -50,6 +52,9 @@ class TopicResponse(TopicBase):
     updated_at: datetime
     category_id: Optional[int] = None
     tags: list[TagResponse] = []
+    
+    class Config:
+        from_attributes = True
     
 
 class TopicListResponse(BaseModel):

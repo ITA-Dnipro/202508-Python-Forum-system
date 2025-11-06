@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, Text, DateTime
+from sqlalchemy import Column, Integer, String, Text, DateTime, func
 from db.session import Base
 from sqlalchemy.orm import relationship 
 from sqlalchemy import Table, ForeignKey
@@ -30,9 +30,9 @@ class Topic(Base):
     category_id = Column(Integer, ForeignKey("categories.id", ondelete="SET NULL"), nullable=True)
     category = relationship("Category", back_populates="topics")
     tags = relationship("Tag", secondary="topic_tags", back_populates="topics")
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
-    
+    created_at = Column(DateTime(timezone=True), default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=func.now(), onupdate=func.now(), nullable=False)
+
     def __repr__(self):
         return f"<Topic(id={self.id}, title='{self.title[:50]}...')>"
 
@@ -61,6 +61,7 @@ topic_tags = Table(
     Column("topic_id", Integer, ForeignKey("topics.id", ondelete="CASCADE")),
     Column("tag_id", Integer, ForeignKey("tags.id", ondelete="CASCADE"))
 )
+
 class Category(Base):
     """
     Category model for topic categorization.
