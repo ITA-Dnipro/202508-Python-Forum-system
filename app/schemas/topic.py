@@ -7,8 +7,10 @@ class TopicBase(BaseModel):
     """Base schema with shared fields."""
     title: str = Field(..., min_length=1, max_length=255, description="Topic title")
     text: str = Field(..., min_length=1, description="Topic body text")
-    class Config:
-        from_attributes = True
+
+    model_config = {
+        "from_attributes": True
+    }
 
 
 class TopicCreate(TopicBase):
@@ -53,8 +55,9 @@ class TopicResponse(TopicBase):
     category_id: Optional[int] = None
     tags: list[TagResponse] = []
     
-    class Config:
-        from_attributes = True
+    model_config = {
+        "from_attributes": True
+    }
     
 
 class TopicListResponse(BaseModel):
@@ -64,10 +67,11 @@ class TopicListResponse(BaseModel):
     page: int
     page_size: int
     
+    model_config = {
+        "from_attributes": True
+    }
 
-    class Config:
-        ''' ORM mode to work with SQLAlchemy models'''
-        from_attributes = True
+    
 
 
 
