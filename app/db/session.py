@@ -9,7 +9,7 @@ engine = create_async_engine(
     future=True,
 )
 
-AsyncSessionLocal = sessionmaker(
+async_session_maker = sessionmaker(
     engine,
     class_=AsyncSession,
     expire_on_commit=False,
@@ -22,7 +22,7 @@ async def get_db() -> AsyncSession:
     Dependency for database sessions.
     Creates a new session for each request and closes it after use.
     """
-    async with AsyncSessionLocal() as session:
+    async with async_session_maker() as session:
         try:
             yield session
         finally:
