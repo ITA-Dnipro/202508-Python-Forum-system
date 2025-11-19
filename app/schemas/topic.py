@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 from pydantic import BaseModel, Field, field_validator
 
 
@@ -15,9 +15,11 @@ class TopicBase(BaseModel):
 
 class TopicCreate(TopicBase):
     """
-    Schema for creating a new topic.
+    Schema for creating a new topic. 
     Includes validation for required fields.
     """
+    category_id: Optional[int] = None
+    tags: List[str] = Field(default_factory=list)
     
     @field_validator("title")
     def validate_title(cls, v):
@@ -33,7 +35,6 @@ class TopicCreate(TopicBase):
             raise ValueError("Text cannot be empty or whitespace only")
         return v.strip()
 
-
 class TopicUpdate(BaseModel):
     """Schema for updating a topic."""
     title: Optional[str] = Field(None, min_length=1, max_length=255)
@@ -42,6 +43,14 @@ class TopicUpdate(BaseModel):
 class TagResponse(BaseModel):
     id: int
     name: str
+    
+class CategoryResponse(BaseModel):
+    id: int
+    name: str
+    
+    model_config = {
+        "from_attributes": True
+    }
     
 class TopicResponse(TopicBase):
     """
@@ -52,7 +61,8 @@ class TopicResponse(TopicBase):
     author_id: int
     created_at: datetime
     updated_at: datetime
-    category_id: Optional[int] = None
+   
+    category: Optional[CategoryResponse] = None
     tags: list[TagResponse] = []
     
     model_config = {
