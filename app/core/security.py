@@ -29,3 +29,30 @@ def get_current_user_id(
             detail=f"Invalid User ID format in header: '{user_id_from_header}'"
         )
 
+
+def get_user_role(
+    role_from_header: Optional[str] = Header(None, alias="user-role")
+) -> str:
+    """
+    Gets the user role directly from the header
+    that the API gateway (KrakenD) sets upon
+    successful authentication.
+
+    KrakenD adds the header: "user-role: admin"
+    """
+    if role_from_header is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User Role header not found. Access denied."
+        )
+    try:
+        user_role = str(role_from_header)
+        return user_role
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Invalid User Role format in header: '{role_from_header}'"
+        )
+
+        
+    
