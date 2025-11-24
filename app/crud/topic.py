@@ -4,6 +4,7 @@ from sqlalchemy.orm import selectinload, joinedload
 from sqlalchemy.ext.asyncio import AsyncSession
 from models.topic import Topic, Tag
 from schemas.topic import TopicCreate, TopicUpdate
+from crud.tags import get_or_create_tags_by_name
 
 
 async def create_topic(
@@ -22,11 +23,17 @@ async def create_topic(
     Returns:
         Created Topic model instance
     """
+    tags_objects = await get_or_create_tags_by_name(
+        db=db, 
+        tag_names=topic_in.tags
+    )
     
     db_topic = Topic(
         title=topic_in.title,
         text=topic_in.text,
-        author_id=author_id
+        author_id=author_id,
+        category_id=topic_in.category_id, 
+        tags=tags_objects
     )
     
     db.add(db_topic)

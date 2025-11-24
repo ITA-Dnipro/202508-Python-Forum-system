@@ -6,8 +6,7 @@ from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
-project_root = os.path.realpath(os.path.join(os.path.dirname(__file__), '..'))
-sys.path.insert(0, project_root)
+
 
 
 from db.session import Base  
@@ -96,20 +95,29 @@ def do_run_migrations(connection: Connection) -> None:
 async def run_async_migrations() -> None:
     """In this scenario we need to create an Engine
     and associate a connection with the context.
-
     """
 
+    configuration = config.get_section(config.config_ini_section, {})
+
+    url = configuration.get("sqlalchemy.url")
+
+    
+    if url and "asyncpg" not in url:
+         url = url.replace("postgresql://", "postgresql+asyncpg://")
+         configuration["sqlalchemy.url"] = url
+
+    
     connectable = async_engine_from_config(
-        config.get_section(config.config_ini_section, {}),
+        configuration, 
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
+        
     )
 
     async with connectable.connect() as connection:
         await connection.run_sync(do_run_migrations)
 
     await connectable.dispose()
-
 
 def run_migrations_online() -> None:
     """Run migrations in 'online' mode."""
