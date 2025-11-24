@@ -1,4 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.params import Query
+from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from db.session import get_db
 from core.security import get_current_user_id
@@ -33,23 +35,37 @@ async def create_topic(
 
 @router.get("/", response_model=TopicListResponse)
 async def list_topics(
-    page: int = 1,
-    page_size: int = 20,
+    page: int = Query(1, ge=1, description="Page number"),
+    page_size: int = Query(20, ge=1, le=100, description="Items per page"),
+    search: Optional[str] = Query(None, description="Search by title or text"),
+    category_id: Optional[int] = Query(None, description="Filter by category ID"),
+    author_id: Optional[int] = Query(None, description="Filter by author ID"),
+    tags: Optional[List[int]] = Query(None, description="Filter by tag IDs (e.g. ?tags=1&tags=2)"),
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Get a paginated list of topics. 
-    
+    Get a paginated list of topics with optional filtering.
     """
-    if page < 1:
-        raise HTTPException(status_code=400, detail="Page must be >= 1")
-    if page_size < 1 or page_size > 100:
-        raise HTTPException(status_code=400, detail="Page size must be between 1 and 100")
     
     skip = (page - 1) * page_size
     
-    topics = await topic_crud.get_topics(db=db, skip=skip, limit=page_size)
-    total = await topic_crud.get_topics_count(db=db)
+    topics = await topic_crud.get_topics(
+        db=db, 
+        skip=skip, 
+        limit=page_size,
+        search=search,
+        category_id=category_id,
+        author_id=author_id,
+        tag_ids=tags
+    )
+    
+    total = await topic_crud.get_topics_count(
+        db=db,
+        search=search,
+        category_id=category_id,
+        author_id=author_id,
+        tag_ids=tags
+    )
     
     return TopicListResponse(
         topics=topics,
@@ -76,7 +92,6 @@ async def get_topic(
         )
     
     return topic
-
 
 @router.patch("/{topic_id}", response_model=TopicResponse)
 async def update_topic(
