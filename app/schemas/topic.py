@@ -2,7 +2,6 @@ from datetime import datetime
 from typing import List, Optional
 from pydantic import BaseModel, Field, field_validator
 
-
 class TopicBase(BaseModel):
     """Base schema with shared fields."""
     title: str = Field(..., min_length=1, max_length=255, description="Topic title")
@@ -22,14 +21,16 @@ class TopicCreate(TopicBase):
     tags: List[str] = Field(default_factory=list)
     
     @field_validator("title")
-    def validate_title(cls, v):
+    @classmethod 
+    def validate_title(cls, v: str) -> str:
         """Ensure title is not empty or only whitespace."""
         if not v or not v.strip():
             raise ValueError("Title cannot be empty or whitespace only")
         return v.strip()
 
     @field_validator("text")
-    def validate_text(cls, v):
+    @classmethod 
+    def validate_text(cls, v: str) -> str:
         """Ensure text is not empty or only whitespace."""
         if not v or not v.strip():
             raise ValueError("Text cannot be empty or whitespace only")
@@ -43,6 +44,10 @@ class TopicUpdate(BaseModel):
 class TagResponse(BaseModel):
     id: int
     name: str
+
+    model_config = {
+        "from_attributes": True
+    }
     
 class CategoryResponse(BaseModel):
     id: int
@@ -80,10 +85,3 @@ class TopicListResponse(BaseModel):
     model_config = {
         "from_attributes": True
     }
-
-    
-
-
-
-
-   
