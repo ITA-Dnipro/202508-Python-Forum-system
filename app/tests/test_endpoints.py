@@ -125,3 +125,31 @@ async def test_combined_filter(client: AsyncClient, mock_current_user):
     data = response.json()
     assert data["total"] == 1
     assert data["topics"][0]["title"] == "Super Guide"
+
+async def test_search_and_lightweight_response(client: AsyncClient, mock_current_user):
+    """
+    Check that search works and that the list response is lightweight 
+    (no 'text' field, includes 'answers_count').
+    """
+    long_text = "Start " + "bla " * 100 + "End"
+    await client.post("/api/v1/topics/", json={
+        "title": "Searchable Unique Title",
+        "text": long_text
+    })
+
+    response = await client.get("/api/v1/topics/?search=Unique")
+    assert response.status_code == 200
+    data = response.json()
+    
+    assert data["total"] == 1
+    topic = data["topics"][0]
+    
+    assert "text" not in topic 
+    assert topic["title"] == "Searchable Unique Title"
+
+    assert "answers_count" in topic
+    assert topic["answers_count"] == 0
+
+    single_resp = await client.get(f"/api/v1/topics/{topic['id']}")
+    assert "text" in single_resp.json()
+    assert single_resp.json()["text"] == long_text
