@@ -56,7 +56,27 @@ class CategoryResponse(BaseModel):
     model_config = {
         "from_attributes": True
     }
+
+class TopicListItem(BaseModel):
+    """
+    Lightweight schema for list views.
+    EXCLUDES 'text' field to improve performance.
+    INCLUDES 'answers_count'.
+    """
+    id: int
+    title: str
+    author_id: int
+    created_at: datetime
+    category: Optional['CategoryResponse'] = None 
+    tags: List['TagResponse'] = []
     
+    answers_count: int = 0 
+
+    model_config = {
+        "from_attributes": True
+    }
+
+ 
 class TopicResponse(TopicBase):
     """
     Schema for topic responses.
@@ -74,10 +94,9 @@ class TopicResponse(TopicBase):
         "from_attributes": True
     }
     
-
 class TopicListResponse(BaseModel):
-    """Schema for paginated topic list."""
-    topics: list[TopicResponse]
+    """Schema for paginated list."""
+    topics: List[TopicListItem] 
     total: int
     page: int
     page_size: int
