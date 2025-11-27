@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+import json
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from fastapi.params import Query
 from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -6,6 +7,8 @@ from db.session import get_db
 from core.security import get_current_user_id
 from schemas.topic import TopicCreate, TopicUpdate, TopicResponse, TopicListResponse
 from crud import topic as topic_crud
+from api import cache
+from db.redis_session import redis_client
 
 
 router = APIRouter(prefix="/topics", tags=["topics"])
@@ -13,7 +16,7 @@ router = APIRouter(prefix="/topics", tags=["topics"])
 
 @router.post("/", response_model=TopicResponse, status_code=status.HTTP_201_CREATED)
 async def create_topic(
-    
+    background_tasks: BackgroundTasks,
     topic_in: TopicCreate,
     db: AsyncSession = Depends(get_db),
     current_user_id: int = Depends(get_current_user_id)
@@ -30,11 +33,18 @@ async def create_topic(
     
     created_topic = await topic_crud.get_topic_by_id(db=db, topic_id=topic.id)
     
+    background_tasks.add_task(cache.clear_topics_cache)
+    
+    
+    event = {"event": "topic_created", "author_id": current_user_id, "topic_id": topic.id}
+    background_tasks.add_task(redis_client.publish, "forum.analytics", json.dumps(event))
+    
     return created_topic
 
 
 @router.get("/", response_model=TopicListResponse)
 async def list_topics(
+    background_tasks: BackgroundTasks,
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(20, ge=1, le=100, description="Items per page"),
     search: Optional[str] = Query(None, description="Search by title or text"),
@@ -46,7 +56,10 @@ async def list_topics(
     """
     Get a paginated list of topics with optional filtering.
     """
-    
+    cached_data = await cache.get_topics_from_cache(page, page_size, search)
+    if cached_data:
+        background_tasks.add_task(redis_client.publish, "forum.analytics", json.dumps({"event": "view_list", "source": "cache"}))
+        return cached_data
     skip = (page - 1) * page_size
     
     topics = await topic_crud.get_topics(
@@ -67,12 +80,15 @@ async def list_topics(
         tag_ids=tags
     )
     
-    return TopicListResponse(
-        topics=topics,
-        total=total,
-        page=page,
-        page_size=page_size
-    )
+    response = TopicListResponse(topics=topics, total=total, page=page, page_size=page_size)
+
+    # 3. Зберігаємо в КЕШ (у фоні, щоб не гальмувати відповідь)
+    background_tasks.add_task(cache.set_topics_cache, page, page_size, search, response)
+    
+    # Відправляємо аналітику (що взяли з БД)
+    background_tasks.add_task(redis_client.publish, "forum.analytics", json.dumps({"event": "view_list", "source": "db"}))
+
+    return response
 
 
 @router.get("/{topic_id}", response_model=TopicResponse)
